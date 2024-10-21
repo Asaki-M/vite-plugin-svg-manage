@@ -10,14 +10,16 @@ import { SVGManageOptions } from './types'
 import fg from 'fast-glob'
 
 const toggleComboKeysMap = {
-  control: process.platform === 'darwin' ? 'Control(^)' : 'Ctrl(^)',
+  option: process.platform === 'darwin' ? 'Option(⌥)' : 'Alt(⌥)',
   meta: 'Command(⌘)',
   shift: 'Shift(⇧)',
 }
 
+const defaultToggleComboKey = 'option-shift-a'
+
 function getSvgManagePath() {
   const pluginPath = normalizePath(path.dirname(fileURLToPath(import.meta.url)))
-  return pluginPath.replace(/\/dist$/, '/src')
+  return pluginPath.replace(/\/dist$/, '/src/client')
 }
 
 export function normalizeComboKeyPrint(toggleComboKey: string) {
@@ -34,6 +36,7 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
   const svgManagePath = getSvgManagePath()
   const normalizedOptions = {
     ...options,
+    toggleComboKey: defaultToggleComboKey
   }
   let config: ResolvedConfig
   let assetsSvgs: Array<string>
@@ -73,14 +76,12 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
       }
     },
     configureServer(server) {
-      // const _printUrls = server.printUrls
-      // const { toggleComboKey } = normalizedOptions
-
-      // toggleComboKey && (server.printUrls = () => {
-      //   const keys = normalizeComboKeyPrint(toggleComboKey)
-      //   _printUrls()
-      //   console.log(`  ${green('➜')}  ${bold('Svg Manage Plugin')}: ${green(`Press ${yellow(keys)} in App to open svg management`)}\n`)
-      // })
+      const _printUrls = server.printUrls
+      server.printUrls = () => {
+        const keys = normalizeComboKeyPrint(defaultToggleComboKey)
+        _printUrls()
+        console.log(`  ${green('➜')}  ${bold('Svg Manage Plugin')}: ${green(`Press ${yellow(keys)} in App to open svg management`)}\n`)
+      }
     },
     transformIndexHtml(html) {
       return {

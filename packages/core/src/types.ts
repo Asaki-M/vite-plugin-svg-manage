@@ -1,4 +1,4 @@
 export interface SVGManageOptions {
   base?: string
-  toggleComboKey?: string | boolean
+  // toggleComboKey?: string | boolean
 }
