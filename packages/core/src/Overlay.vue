@@ -1,0 +1,321 @@
+<script setup>
+import { ref, computed } from 'vue'
+import svgManageOptions from 'virtual:svg-manage-options'
+
+const assetsSvgs = ref(svgManageOptions.assetsSvgs)
+
+function classifyByDirectory(paths) {
+  const directoryMap = {};
+  paths.forEach(path => {
+    const directory = path.substring(0, path.lastIndexOf('/'));
+    if (!directoryMap[directory]) {
+      directoryMap[directory] = [];
+    }
+    directoryMap[directory].push(path);
+  });
+
+  return Object.keys(directoryMap).map(directory => ({
+    title: directory,
+    list: directoryMap[directory]
+  }));
+}
+
+const searchInput = ref('')
+const computedList = computed(() => {
+  if (searchInput.value) {
+    return classifyByDirectory(assetsSvgs.value.filter(item => item.includes(searchInput.value)))
+  }
+  return classifyByDirectory(assetsSvgs.value)
+})
+
+const showDetail = ref(false)
+const openDetail = (detailSrc) => {
+  showDetail.value = {
+    src: detailSrc
+  }
+}
+const closeDetail = () => {
+  showDetail.value = false
+}
+
+</script>
+
+<template>
+  <div class="plugin-svg-manage-container">
+    <div class="plugin-svg-manage-sidebar" :class="{ active: !!showDetail }">
+      <div class="plugin-svg-manage-sidebar-header-wrap" @click="closeDetail">
+        <div>X</div>
+      </div>
+      <div class="plugin-svg-manage-sidebar-body">
+        <div class="plugin-svg-manage-svg-wrap">
+          <img :src="showDetail.src" class="plugin-svg-manage-svg">
+        </div>
+        <div class="plugin-svg-manage-sidebar-detail">
+          <div class="info">
+            <div class="title">Filepath</div>
+            <div class="content">Filepath</div>
+          </div>
+          <div class="info">
+            <div class="title">Public Path</div>
+            <div class="content">Public Path</div>
+          </div>
+          <div class="info">
+            <div class="title">Image Size</div>
+            <div class="content">Image Size</div>
+          </div>
+          <div class="info">
+            <div class="title">File size</div>
+            <div class="content">File size</div>
+          </div>
+        </div>
+        <div class="plugin-svg-manage-sidebar-action">
+          <div class="title">Import Type(click to copy)</div>
+          <div class="action">import Icon from './aa'</div>
+          <div class="action">import Icon from './aa'</div>
+          <div class="action">import Icon from './aa'</div>
+          <div class="action">import Icon from './aa'</div>
+        </div>
+      </div>
+    </div>
+    <div class="plugin-svg-manage-header">
+      <input type="text" placeholder="Search..." class="plugin-svg-manage-search" v-model="searchInput" />
+      <h2 class="plugin-svg-manage-title">{{ assetsSvgs.length }} {{ assetsSvgs.length === 1 ? 'asset' : 'assets' }} in
+        total</h2>
+    </div>
+    <div class="plugin-svg-manage-list-wrap">
+      <div class="plugin-svg-manage-preview-container" v-for="({ title, list }, index) in computedList" :key="index">
+        <div class="plugin-svg-manage-preview-title">{{ title }}</div>
+        <div class="plugin-svg-manage-preview-list">
+          <div class="plugin-svg-manage-preview" v-for="src in list" :key="src" @click="() => openDetail(src)">
+            <div class="plugin-svg-manage-svg-wrap">
+              <img :src="src" class="plugin-svg-manage-svg">
+            </div>
+            <div class="plugin-svg-manage-name">{{ src.substring(src.lastIndexOf('/') + 1) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.plugin-svg-manage-container {
+  position: fixed;
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60vw;
+  height: 70vh;
+  border: 1px solid #efefef;
+  border-radius: 12px;
+  box-shadow: 2px 2px 8px rgba(128, 128, 128, .1);
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.plugin-svg-manage-sidebar {
+  width: 30%;
+  height: 100%;
+  position: absolute;
+  right: -100%;
+  border: 1px solid #efefef;
+  background-color: #fff;
+  transition: right .3s;
+}
+
+.plugin-svg-manage-sidebar.active {
+  right: 0;
+}
+
+.plugin-svg-manage-sidebar-header-wrap {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.plugin-svg-manage-sidebar-header-wrap>div {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color .3s;
+}
+
+.plugin-svg-manage-sidebar-header-wrap>div:hover {
+  background-color: rgba(128, 128, 128, .1);
+}
+
+.plugin-svg-manage-sidebar-body {
+  box-sizing: border-box;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.plugin-svg-manage-sidebar-detail {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plugin-svg-manage-sidebar-detail>.info {
+  width: 100%;
+  display: flex;
+}
+
+.plugin-svg-manage-sidebar-detail>.info>.title {
+  font-size: 0.8rem;
+  width: 40%;
+  text-align: left;
+  white-space: nowrap;
+  line-height: 1rem;
+}
+
+.plugin-svg-manage-sidebar-detail>.info>.content {
+  font-size: 0.9rem;
+  width: 60%;
+  text-align: left;
+  word-break: break-all;
+  line-height: 1rem;
+}
+
+.plugin-svg-manage-sidebar-action {
+  text-align: left;
+  width: 100%;
+}
+
+.plugin-svg-manage-sidebar-action>.title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  border-bottom: 1px solid #efefef;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+.plugin-svg-manage-sidebar-action>.action {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.plugin-svg-manage-sidebar-action>.action:hover {
+  text-decoration: underline;
+}
+
+
+.plugin-svg-manage-sidebar.active {
+  right: 0;
+}
+
+.plugin-svg-manage-header {
+  padding-top: 16px;
+  height: 100px;
+}
+
+.plugin-svg-manage-list-wrap {
+  width: 100%;
+  height: calc(100% - 100px);
+  overflow: auto;
+}
+
+.plugin-svg-manage-list-wrap::-webkit-scrollbar {
+  width: 4px;
+  height: 8px;
+}
+
+.plugin-svg-manage-list-wrap::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, .1);
+  border-radius: 4px;
+}
+
+.plugin-svg-manage-list-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.plugin-svg-manage-search {
+  display: block;
+  width: 80%;
+  height: 32px;
+  margin: 0 auto;
+  border: 1px solid #efefef;
+  border-radius: 4px;
+  padding: 0 8px;
+  transition: border-color .3s;
+}
+
+.plugin-svg-manage-search:focus {
+  outline: none;
+  border-color: rgb(66, 185, 131);
+}
+
+.plugin-svg-manage-title {
+  box-sizing: border-box;
+  padding: 8px 16px;
+  font-size: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  font-weight: 400;
+  color: #bbb;
+}
+
+.plugin-svg-manage-preview-container {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.plugin-svg-manage-preview-container>.plugin-svg-manage-preview-title {
+  text-align: left;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 8px 0;
+}
+
+.plugin-svg-manage-preview-list {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.plugin-svg-manage-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.plugin-svg-manage-svg-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  border: 1px solid #efefef;
+  background-color: #FAFAFB;
+}
+
+.plugin-svg-manage-name {
+  color: #888;
+  font-size: 14px;
+}
+
+.plugin-svg-manage-svg {
+  width: 70%;
+  transition: transform .3s;
+}
+
+.plugin-svg-manage-preview:hover .plugin-svg-manage-svg {
+  transform: scale(1.2);
+}
+</style>
