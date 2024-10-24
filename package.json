@@ -10,20 +10,17 @@
     "url": "https://github.com/Asaki-M/vite-plugin-svg-manage/issues"
   },
   "scripts": {
-    "play:nuxt": "pnpm run -r --filter=./packages/playground/nuxt dev",
-    "play:vue3": "pnpm run -r --filter=./packages/playground/vue3 dev",
-    "play:vue2": "pnpm run -r --filter=./packages/playground/vue2 dev",
+    "play:vue": "pnpm run -r --filter=./packages/playground/vue dev",
     "dev": "pnpm run -r --filter=./packages/core dev",
-    "build": "pnpm run -r --filter=./packages/{core,unplugin} build",
+    "build": "pnpm run -r --filter=./packages/core build",
     "release": "pnpm build && changeset && changeset version && changeset publish"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",
-    "@vitejs/plugin-vue": "^5.1.2",
-    "bumpp": "^9.5.1",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^6.0.1",
     "tsup": "^8.2.4",
     "typescript": "^5.6.3",
-    "vite": "^5.4.4",
-    "vue": "^3.5.3"
+    "vite": "^5.4.4"
   }
 }

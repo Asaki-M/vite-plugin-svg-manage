@@ -29,13 +29,13 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist",
-    "src/load.js",
-    "src/Overlay.vue"
+    "dist"
   ],
   "scripts": {
     "dev": "tsup src/index.ts --dts --format cjs,esm --shims --watch",
-    "build": "tsup src/index.ts --dts --format cjs,esm --shims"
+    "build": "rimraf dist && run-s build:*",
+    "build:server": "tsup src/index.ts --dts --format cjs,esm --shims",
+    "build:client": "vite build src/client"
   },
   "peerDependencies": {
     "vite": "^3.0.0-0 || ^4.0.0-0 || ^5.0.0-0"
