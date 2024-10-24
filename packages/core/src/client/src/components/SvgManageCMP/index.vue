@@ -1,7 +1,10 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { VueInput, VueDrawer, VueCodeBlock, VueButton, showVueNotification } from '@vue/devtools-ui'
 import { createHotContext } from 'vite-hot-client'
+import { classifyByDirectory } from 'UTIL'
+import { useClipboard } from '@vueuse/core'
+import DropWrap from '../DropWrap/index.vue'
 
 const svglist = ref([])
 
@@ -15,38 +18,6 @@ if (hot) {
   })
 }
 
-// const showSvgManage = ref(false)
-// function onKeydown(event) {
-//   if (event.repeat || event.key === undefined)
-//     return
-//   if (event.code === 'KeyA' && event.altKey && event.shiftKey) {
-//     showSvgManage.value = true
-//   } else if (event.key === 'Escape') {
-//     showSvgManage.value = false
-//   }
-// }
-
-// onUnmounted(() => {
-//   document.body.removeEventListener('keydown', onKeydown)
-// })
-
-
-function classifyByDirectory(filesInfo) {
-  const directoryMap = {};
-
-  filesInfo.forEach(file => {
-    const directory = file.publicPath.substring(0, file.publicPath.lastIndexOf('/'));
-    if (!directoryMap[directory]) {
-      directoryMap[directory] = [];
-    }
-    directoryMap[directory].push(file);
-  });
-
-  return Object.keys(directoryMap).map(directory => ({
-    title: directory,
-    list: directoryMap[directory]
-  }));
-}
 
 const searchInput = ref('')
 const computedList = computed(() => {
@@ -91,26 +62,25 @@ const toggleImportTab = (value) => {
   currentImportTab.value = value
 }
 
+const { copy, isSupported } = useClipboard()
 const copyCode = () => {
-  const text = currentDetail.value.importee[currentImportTab.value]
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => {
-      showVueNotification({
-        type: 'success',
-        message: 'Copied.'
-      })
-    }).catch(err => {
-      showVueNotification({
-        type: 'error',
-        message: 'Copied Failed.'
-      })
-    });
-  } else {
+  if (!isSupported) {
     showVueNotification({
       type: 'warning',
       message: 'Cannot Copy. Please update your browser.'
     })
+    return
+  } else {
+    copy(currentDetail.value.importee[currentImportTab.value])
+    showVueNotification({
+      type: 'success',
+      message: 'Copied.'
+    })
   }
+}
+
+const onDropFile = (files) => {
+  console.log(files)
 }
 
 </script>
@@ -164,20 +134,25 @@ const copyCode = () => {
       {{ svglist.length }} {{ svglist.length === 1 ? 'asset' : 'assets' }} in total
     </h2>
   </div>
-  <div class="w-full py-4">
-    <div class="w-full border-b border-gray-200 py-4 px-2" v-for="({ title, list }, index) in computedList"
+  <div class="w-full">
+    <div class="w-full" v-for="({ title, list }, index) in computedList"
       :key="index">
-      <div class="font-bold mb-4">{{ title }}</div>
-      <div class="w-full flex-wrap flex gap-5">
-        <div class="flex flex-col justify-center items-center gap-3 cursor-pointer" v-for="asset in list"
-          :key="asset.publicPath" @click="() => openDetail(asset)">
-          <div class="group flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
-            <img :src="asset.publicPath" class="w-9/12 group-hover:scale-125 transition-all duration-200">
-          </div>
-          <div class="text-neutral-500">{{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}
+      <DropWrap :dropDataTypes="['image/svg+xml']" @onDrop="onDropFile" v-slot="slotProps">
+        <div class="w-full border-b border-gray-200 py-4 px-2" :class="{ 'bg-stone-300/30': slotProps.isOverDropZone }">
+          <div class="font-bold mb-4">{{ title }}</div>
+          <div class="w-full flex-wrap flex gap-5">
+            <div class="flex flex-col justify-center items-center gap-3 cursor-pointer" v-for="asset in list"
+              :key="asset.publicPath" @click="() => openDetail(asset)">
+              <div
+                class="group flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
+                <img :src="asset.publicPath" class="w-9/12 group-hover:scale-125 transition-all duration-200">
+              </div>
+              <div class="text-neutral-500">{{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </DropWrap>
     </div>
   </div>
 </template>

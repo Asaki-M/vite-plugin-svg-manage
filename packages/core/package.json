@@ -33,6 +33,7 @@
   ],
   "scripts": {
     "dev": "tsup src/index.ts --dts --format cjs,esm --shims --watch",
+    "dev:client": "vite src/client",
     "build": "rimraf dist && run-s build:*",
     "build:server": "tsup src/index.ts --dts --format cjs,esm --shims",
     "build:client": "vite build src/client"

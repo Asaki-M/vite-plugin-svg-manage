@@ -9,7 +9,8 @@ export default defineConfig({
   base: './',
   resolve: {
     alias: {
-      'ASSETS': resolve(__dirname, './src/assets')
+      'ASSETS': resolve(__dirname, './src/assets'),
+      'UTIL': resolve(__dirname, './src/utils')
     }
   },
   plugins: [vue(), UnoCSS(), VitePluginSvgManage()],
