@@ -12,6 +12,7 @@
   "scripts": {
     "play:vue": "pnpm run -r --filter=./packages/playground/vue dev",
     "dev": "pnpm run -r --filter=./packages/core dev",
+    "dev:client": "pnpm run -r --filter=./packages/core/src/client dev",
     "build": "pnpm run -r --filter=./packages/core build",
     "release": "pnpm build && changeset && changeset version && changeset publish"
   },

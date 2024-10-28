@@ -24,6 +24,10 @@ const props = defineProps({
   overDropClass: {
     type: String,
     default: ''
+  },
+  targetPath: {
+    type: String,
+    default: ''
   }
 })
 
@@ -32,7 +36,7 @@ const emit = defineEmits(['onDrop'])
 const dropZoneRef = ref()
 
 const onDrop = (files) => {
-  emit('onDrop', files)
+  emit('onDrop', { files, targetPath: props.targetPath })
 }
 
 const { isOverDropZone } = useDropZone(dropZoneRef, {

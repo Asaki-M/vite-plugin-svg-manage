@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { VueInput, VueDrawer, VueCodeBlock, VueButton, showVueNotification } from '@vue/devtools-ui'
+import { VueInput, VueDrawer, VueCodeBlock, VueButton, VueIcon, VueDialog, showVueNotification } from '@vue/devtools-ui'
 import { createHotContext } from 'vite-hot-client'
-import { classifyByDirectory } from 'UTIL'
+import { classifyByDirectory, readFilesAsArrayBuffer } from 'UTIL'
 import { useClipboard } from '@vueuse/core'
 import DropWrap from '../DropWrap/index.vue'
+import DropDown from '../Dropdown/index.vue'
+import DropTextArea from '../DropTextArea/index.vue'
 
 const svglist = ref([])
 
@@ -13,7 +15,6 @@ if (hot) {
   hot.on('vite-plugin-svg-manage:initData', ({ assetsSvgs }) => {
     if (assetsSvgs) {
       svglist.value = assetsSvgs
-
     }
   })
 }
@@ -79,8 +80,66 @@ const copyCode = () => {
   }
 }
 
-const onDropFile = (files) => {
-  console.log(files)
+const onDropFile = async ({ files, targetPath }) => {
+  const filesList = await readFilesAsArrayBuffer(files)
+  const data = { targetPath, filesList }
+  hot.send('vite-plugin-svg-manage:saveFile', data)
+}
+
+const showCreateDialogVisable = ref(false)
+const form = ref({
+  dir: '',
+  name: '',
+  content: '',
+  files: []
+})
+const selectedValue = ref('')
+
+const dirList = computed(() => {
+  return classifyByDirectory(svglist.value).map(item => ({ label: item.title, value: item.title }))
+})
+watch(showCreateDialogVisable, () => {
+  if (!showCreateDialogVisable.value) {
+    selectedValue.value = ''
+  }
+})
+const dialogDropFile = (files) => {
+  if (files.length === 0) {
+    form.value.files = []
+    form.value.name = ''
+  } else {
+    form.value.files = files
+    form.value.name = files[0].name.slice(0, files[0].name.length - 4)
+  }
+}
+
+const createSvgFile = async () => {
+  let data = {
+    targetPath: form.value.dir,
+    filename: form.value.name + '.svg',
+    content: form.value.content,
+  }
+  if (form.value.files.length !== 0) {
+    data = {
+      targetPath: form.value.dir,
+      filesList: form.value.files
+    }
+  }
+  hot.send('vite-plugin-svg-manage:saveFile', data)
+  hot.on('vite-plugin-svg-manage:afterSaveFile', ({ msg, err }) => {
+    if (!err) {
+      showVueNotification({
+        type: 'success',
+        message: msg
+      })
+      showCreateDialogVisable.value = false
+    } else {
+      showVueNotification({
+        type: 'error',
+        message: msg + ':    ' + JSON.stringify(err)
+      })
+    }
+  })
 }
 
 </script>
@@ -130,15 +189,22 @@ const onDropFile = (files) => {
     <div class="w-3/5 mx-auto">
       <VueInput placeholder="Search..." v-model="searchInput" />
     </div>
-    <h2 class="w-full mt-5 py-2 px-4 border-b border-gray-200 text-gray-400">
-      {{ svglist.length }} {{ svglist.length === 1 ? 'asset' : 'assets' }} in total
-    </h2>
+    <div class="w-full mt-5 py-2 px-4 border-b border-gray-200 flex justify-between">
+      <div class="text-gray-400 text-lg">
+        {{ svglist.length }} {{ svglist.length === 1 ? 'asset' : 'assets' }} in total
+      </div>
+      <div class="flex items-center gap-2">
+        <VueButton class="w-fit" type="primary" @click="() => showCreateDialogVisable = true">
+          <VueIcon icon="i-carbon-add w-5 h-5"></VueIcon>
+        </VueButton>
+      </div>
+    </div>
   </div>
   <div class="w-full">
-    <div class="w-full" v-for="({ title, list }, index) in computedList"
-      :key="index">
-      <DropWrap :dropDataTypes="['image/svg+xml']" @onDrop="onDropFile" v-slot="slotProps">
-        <div class="w-full border-b border-gray-200 py-4 px-2" :class="{ 'bg-stone-300/30': slotProps.isOverDropZone }">
+    <div class="w-full" v-for="({ title, list }, index) in computedList" :key="index">
+      <DropWrap :targetPath="title" :dropDataTypes="['image/svg+xml']" @onDrop="onDropFile" v-slot="slotProps">
+        <div class="w-full border-b border-gray-200 py-4 px-2 overflow-y-auto"
+          :class="{ 'bg-stone-300/30': slotProps.isOverDropZone }">
           <div class="font-bold mb-4">{{ title }}</div>
           <div class="w-full flex-wrap flex gap-5">
             <div class="flex flex-col justify-center items-center gap-3 cursor-pointer" v-for="asset in list"
@@ -147,14 +213,48 @@ const onDropFile = (files) => {
                 class="group flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
                 <img :src="asset.publicPath" class="w-9/12 group-hover:scale-125 transition-all duration-200">
               </div>
-              <div class="text-neutral-500">{{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}
-              </div>
+              <div class="text-neutral-500">{{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}</div>
             </div>
           </div>
         </div>
       </DropWrap>
     </div>
   </div>
+  <VueDialog height="fit-content" v-model="showCreateDialogVisable" title="Upload/Create Svg">
+    <template #default>
+      <div class="flex flex-col gap-2 mt-4">
+        <div>
+          <p>Icon Name:</p>
+          <p class="text-sm text-gray-400">You don't need to input .svg</p>
+        </div>
+        <VueInput placeholder="Input..." v-model="form.name"></VueInput>
+      </div>
+      <div class="flex flex-col gap-2 mt-4">
+        <div>
+          <p>Dirctory: </p>
+          <p class="text-sm text-gray-400">Support input a new dirctory</p>
+        </div>
+        <DropDown :options="dirList" v-model:selectedValue="form.dir"></DropDown>
+      </div>
+      <div class="flex flex-col gap-2 mt-4">
+        <div>
+          <p>Content:</p>
+          <p class="text-sm text-gray-400">Input svg code or drop a svg file here</p>
+        </div>
+        <DropTextArea v-model:content="form.content" @dropFile="dialogDropFile"></DropTextArea>
+      </div>
+    </template>
+    <template #footer>
+      <div class="w-full flex items-center justify-end gap-2">
+        <VueButton class="w-fit" @click="() => showCreateDialogVisable = false">
+          Close
+        </VueButton>
+        <VueButton class="w-fit" type="primary" @click="createSvgFile">
+          Create
+        </VueButton>
+      </div>
+    </template>
+  </VueDialog>
 </template>
 
 <style scoped>

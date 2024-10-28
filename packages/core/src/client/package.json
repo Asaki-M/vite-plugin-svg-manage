@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@iconify/json": "^2.2.260",
+    "@unocss/preset-uno": "^0.63.6",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/devtools-ui": "^7.5.2",
     "unocss": "^0.63.6",
@@ -16,6 +18,7 @@
     "vue": "^3.5.12"
   },
   "dependencies": {
+    "@unocss/preset-icons": "^0.63.6",
     "@vueuse/core": "^11.1.0"
   }
 }
