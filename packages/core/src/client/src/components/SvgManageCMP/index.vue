@@ -7,6 +7,7 @@ import { useClipboard } from '@vueuse/core'
 import DropWrap from '../DropWrap/index.vue'
 import DropDown from '../Dropdown/index.vue'
 import DropTextArea from '../DropTextArea/index.vue'
+import LabelWithInput from '../LabelWithInput/index.vue'
 
 const svglist = ref([])
 
@@ -156,6 +157,22 @@ const createSvgFile = async () => {
   })
 }
 
+const renameSvgFile = (name, publicPath) => {
+  const arr = publicPath.split('/')
+  arr.pop()
+  const targetPath = arr.join('/')
+  hot.send('vite-plugin-svg-manage:renameFile', { newName: name + '.svg', targetPath, oldPath: publicPath })
+  hot.on('vite-plugin-svg-manage:afterRenameFile', ({ msg, err }) => {
+    if (err) {
+      console.log(msg, err)
+      showVueNotification({
+        type: 'error',
+        message: msg + ':    ' + JSON.stringify(err)
+      })
+    }
+  })
+}
+
 </script>
 
 <template>
@@ -221,15 +238,13 @@ const createSvgFile = async () => {
           :class="{ 'bg-stone-300/30': slotProps.isOverDropZone }">
           <div class="font-bold mb-4">{{ title }}</div>
           <div class="w-full flex-wrap flex gap-5">
-            <div class="flex flex-col justify-center items-center gap-3 cursor-pointer" v-for="asset in list"
-              :key="asset.publicPath" @click="() => openDetail(asset)">
-              <div
-                class="group flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
+            <div class="flex flex-col justify-center items-center gap-3" v-for="asset in list" :key="asset.publicPath">
+              <div @click="() => openDetail(asset)"
+                class="group flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200 cursor-pointer">
                 <img :src="asset.publicPath" class="w-9/12 group-hover:scale-125 transition-all duration-200">
               </div>
-              <div class="text-neutral-500">
-                {{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}
-              </div>
+              <LabelWithInput :label="asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1)"
+                @submit="(name) => renameSvgFile(name, asset.publicPath)"></LabelWithInput>
               <VueIcon icon="i-carbon-trash-can" class="w-5 h-5 cursor-pointer transition-colors text-red-500"
                 @click.stop="() => deleteAsset(asset)"></VueIcon>
             </div>

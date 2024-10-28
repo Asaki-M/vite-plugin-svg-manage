@@ -115,6 +115,21 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
         });
       })
 
+      server.ws.on('vite-plugin-svg-manage:renameFile', (data) => {
+        const { newName, targetPath, oldPath } = data
+        const target = path.join(config.root, targetPath, newName)
+        const normalOldPath = path.join(config.root, oldPath)
+        fs.rename(normalOldPath, target, async (err) => {
+          if (!err) {
+            const result = await getAssetsSvg(config.resolve.alias, config.root)
+            assetsSvgs = result
+            server.ws.send('vite-plugin-svg-manage:initData', { assetsSvgs: result })
+          } else {
+            server.ws.send('vite-plugin-svg-manage:afterRenameFile', { msg: 'Failed to delete', err })
+          }
+        })
+      })
+
       const _printUrls = server.printUrls
       const colorUrl = (url: string) =>
         cyan(url.replace(/:(\d+)\//, (_, port) => `:${bold(port)}/`))
