@@ -1,6 +1,7 @@
 {
   "name": "vite-plugin-svg-manage",
   "version": "1.0.1",
+  "description": "Easy to manage assets SVG",
   "license": "MIT",
   "author": "Qinghuan <qinghuanhu@gmail.com>",
   "homepage": "https://github.com/Asaki-M/vite-plugin-svg-manage#readme",
