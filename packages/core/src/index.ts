@@ -70,6 +70,7 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
           fs.writeFile(target, content, async err => {
             if (!err) {
               const result = await getAssetsSvg(config.resolve.alias, config.root)
+              assetsSvgs = result
               server.ws.send('vite-plugin-svg-manage:initData', { assetsSvgs: result })
               server.ws.send('vite-plugin-svg-manage:afterSaveFile', { msg: 'Success' })
             } else {
@@ -88,6 +89,7 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
             fs.writeFile(target, buffer, async (err) => {
               if (!err) {
                 const result = await getAssetsSvg(config.resolve.alias, config.root)
+                assetsSvgs = result
                 server.ws.send('vite-plugin-svg-manage:initData', { assetsSvgs: result })
                 server.ws.send('vite-plugin-svg-manage:afterSaveFile', { msg: 'Success' })
               } else {
@@ -97,6 +99,20 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
           })
         }
 
+      })
+
+      server.ws.on('vite-plugin-svg-manage:deleteFile', (data) => {
+        const { targetPath } = data
+        const target = path.join(config.root, targetPath)
+        fs.unlink(target, async (err) => {
+          if (!err) {
+            const result = await getAssetsSvg(config.resolve.alias, config.root)
+            assetsSvgs = result
+            server.ws.send('vite-plugin-svg-manage:initData', { assetsSvgs: result })
+          } else {
+            server.ws.send('vite-plugin-svg-manage:afterDeleteFile', { msg: 'Failed to delete', err })
+          }
+        });
       })
 
       const _printUrls = server.printUrls

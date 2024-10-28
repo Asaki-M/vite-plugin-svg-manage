@@ -86,6 +86,20 @@ const onDropFile = async ({ files, targetPath }) => {
   hot.send('vite-plugin-svg-manage:saveFile', data)
 }
 
+const deleteAsset = (asset) => {
+  const { publicPath: targetPath } = asset
+
+  hot.send('vite-plugin-svg-manage:deleteFile', { targetPath })
+  hot.on('vite-plugin-svg-manage:afterDeleteFile', ({ msg, err }) => {
+    if (err) {
+      showVueNotification({
+        type: 'error',
+        message: msg + ':    ' + JSON.stringify(err)
+      })
+    }
+  })
+}
+
 const showCreateDialogVisable = ref(false)
 const form = ref({
   dir: '',
@@ -213,7 +227,11 @@ const createSvgFile = async () => {
                 class="group flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
                 <img :src="asset.publicPath" class="w-9/12 group-hover:scale-125 transition-all duration-200">
               </div>
-              <div class="text-neutral-500">{{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}</div>
+              <div class="text-neutral-500">
+                {{ asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1) }}
+              </div>
+              <VueIcon icon="i-carbon-trash-can" class="w-5 h-5 cursor-pointer transition-colors text-red-500"
+                @click.stop="() => deleteAsset(asset)"></VueIcon>
             </div>
           </div>
         </div>
