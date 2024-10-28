@@ -1,8 +1,14 @@
 # vite-plugin-svg-manage
 
+## 1.0.2
+
+### Patch Changes
+
+- Add rename svg
+
 ## 1.0.1
 
-### Major Changes
+### Patch Changes
 
 - Add readme content and support add/delete svg
 
