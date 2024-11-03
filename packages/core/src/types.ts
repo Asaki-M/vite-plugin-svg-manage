@@ -1,3 +1,5 @@
+import { INode } from "svgson"
+
 export interface SVGManageOptions {
   base?: string
   // toggleComboKey?: string | boolean
@@ -17,6 +19,7 @@ export interface SvgFileInfosOpions {
   width: number | null
   height: number | null
   importee: SvgFileImporteeOptions
+  compareSvgData: Array<INode>
 }
 
 export interface SvgFileAliasOptions {

@@ -63,3 +63,15 @@ export function computedFileSize(size: number): string {
 export function camelCaseName(basename: string): string {
   return basename.toLowerCase().replace(/[-_\s]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '')
 }
+
+export function findDifferences(obj1: object, obj2: object): object {
+  const differences = {};
+
+  for (const key in obj2) {
+      if (!(key in obj1) || obj1[key] !== obj2[key]) {
+          differences[key] = obj2[key];
+      }
+  }
+
+  return differences;
+}

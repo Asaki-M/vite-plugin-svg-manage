@@ -3,10 +3,12 @@ import { fileURLToPath } from 'node:url'
 import fs from 'node:fs'
 import process from 'node:process'
 import sirv from 'sirv'
+import svgson from 'svgson'
 import { bold, dim, green, cyan } from 'kolorist'
 import { normalizePath } from 'vite'
 import type { PluginOption, ResolvedConfig } from 'vite'
-import { getAssetsSvg } from './assets'
+import { getAssetsSvg, compareSvg } from './assets'
+import { parseSvgsonData } from './utils/assets'
 import { SVGManageOptions, SvgFileInfosOpions } from './types'
 import { DIR_CLIENT } from './dir'
 
@@ -128,6 +130,35 @@ function VitePluginSvgManage(options: SVGManageOptions): PluginOption {
             server.ws.send('vite-plugin-svg-manage:afterRenameFile', { msg: 'Failed to delete', err })
           }
         })
+      })
+
+      server.ws.on('vite-plugin-svg-manage:compareFile', (data) => {
+        const { filesList, targetPath, filename, content } = data
+        if (!!content) {
+          const uploadSvgson = svgson.parseSync(content)
+          const uploadSvgsonData = parseSvgsonData(uploadSvgson)
+          const result = compareSvg(uploadSvgsonData, assetsSvgs)
+          if (!!result) {
+            server.ws.send('vite-plugin-svg-manage:compareCallback', { msg: 'Find Same Svg', result: [result] })
+          } else {
+            server.ws.send('vite-plugin-svg-manage:compareCallback', { msg: '', result: [result] })
+          }
+        } else {
+          const result = []
+          filesList.forEach(file => {
+            const base64Prefix = 'data:image/svg+xml;base64,';
+            if (file.content.startsWith(base64Prefix)) {
+              const content = (Buffer.from(file.content.slice(base64Prefix.length), 'base64')).toString('utf-8')
+              const uploadSvgson = svgson.parseSync(content)
+              const uploadSvgsonData = parseSvgsonData(uploadSvgson)
+              const res = compareSvg(uploadSvgsonData, assetsSvgs)
+              if(!!res) {
+                result.push(res)
+              }
+            }
+          })
+          server.ws.send('vite-plugin-svg-manage:compareCallback', { msg: '', result })
+        }
       })
 
       const _printUrls = server.printUrls

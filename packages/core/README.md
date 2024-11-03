@@ -46,9 +46,9 @@ Click the SVG can view details and copy this SVG importee code. If you do not co
 
 ✅️ add/delete svg
 
-☑️ rename svg
+✅️ rename svg
 
-☑️ compare svg content
+✅️ compare svg content
 
 ☑️ iframe in app
 

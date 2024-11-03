@@ -48,6 +48,7 @@
   "dependencies": {
     "fast-glob": "^3.3.2",
     "kolorist": "^1.8.0",
-    "sirv": "^2.0.4"
+    "sirv": "^2.0.4",
+    "svgson": "^5.3.1"
   }
 }

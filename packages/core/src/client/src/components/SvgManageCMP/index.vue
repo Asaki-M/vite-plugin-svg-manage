@@ -8,6 +8,7 @@ import DropWrap from '../DropWrap/index.vue'
 import DropDown from '../Dropdown/index.vue'
 import DropTextArea from '../DropTextArea/index.vue'
 import LabelWithInput from '../LabelWithInput/index.vue'
+import SameSVGDialog from '../SameSVGDialog/index.vue'
 
 const svglist = ref([])
 
@@ -16,6 +17,7 @@ if (hot) {
   hot.on('vite-plugin-svg-manage:initData', ({ assetsSvgs }) => {
     if (assetsSvgs) {
       svglist.value = assetsSvgs
+      console.log(assetsSvgs)
     }
   })
 }
@@ -84,7 +86,15 @@ const copyCode = () => {
 const onDropFile = async ({ files, targetPath }) => {
   const filesList = await readFilesAsArrayBuffer(files)
   const data = { targetPath, filesList }
-  hot.send('vite-plugin-svg-manage:saveFile', data)
+  hot.send('vite-plugin-svg-manage:compareFile', data)
+  hot.on('vite-plugin-svg-manage:compareCallback', ({msg, result}) => {
+    if(!!result && result.length > 0) {
+      showSameSvgTip.value = true
+      currentSameSvg.value = result
+    } else {
+      hot.send('vite-plugin-svg-manage:saveFile', data)
+    }
+  })
 }
 
 const deleteAsset = (asset) => {
@@ -109,6 +119,8 @@ const form = ref({
   files: []
 })
 const selectedValue = ref('')
+const showSameSvgTip = ref(false)
+const currentSameSvg = ref(null)
 
 const dirList = computed(() => {
   return classifyByDirectory(svglist.value).map(item => ({ label: item.title, value: item.title }))
@@ -140,7 +152,16 @@ const createSvgFile = async () => {
       filesList: form.value.files
     }
   }
-  hot.send('vite-plugin-svg-manage:saveFile', data)
+  hot.send('vite-plugin-svg-manage:compareFile', data)
+  hot.on('vite-plugin-svg-manage:compareCallback', ({msg, result}) => {
+    if(!!result && result.length > 0) {
+      showSameSvgTip.value = true
+      currentSameSvg.value = result
+    } else {
+      hot.send('vite-plugin-svg-manage:saveFile', data)
+    }
+  })
+  
   hot.on('vite-plugin-svg-manage:afterSaveFile', ({ msg, err }) => {
     if (!err) {
       showVueNotification({
@@ -288,6 +309,7 @@ const renameSvgFile = (name, publicPath) => {
       </div>
     </template>
   </VueDialog>
+  <SameSVGDialog v-model:show="showSameSvgTip" :result="currentSameSvg" />
 </template>
 
 <style scoped>

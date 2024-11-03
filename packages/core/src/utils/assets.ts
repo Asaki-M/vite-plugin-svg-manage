@@ -5,6 +5,7 @@ import { normalizePath } from 'vite'
 import fg from 'fast-glob'
 import path from 'node:path'
 import fs from 'node:fs'
+import svgson, { INode } from 'svgson'
 import { computedFileSize, camelCaseName } from '.'
 
 export function normarlizeAlias(alias: Array<Alias>, root: string): SvgFileAliasOptions {
@@ -37,6 +38,32 @@ export function normarlizeAlias(alias: Array<Alias>, root: string): SvgFileAlias
   return result
 }
 
+export function parseSvgsonData(node: INode): Array<INode> {
+  const matchNames = [
+    'circle',
+    'ellipse',
+    'rect',
+    'line',
+    'polygon',
+    'polyline',
+    'path',
+  ]
+
+  let result = []
+
+  const { name, children } = node
+  if (matchNames.includes(name)) {
+    result.push(node)
+  }
+  if (children && children.length > 0) {
+    children.forEach(childNode => {
+      result = result.concat(parseSvgsonData(childNode))
+    })
+  }
+
+  return result
+}
+
 export async function formatFilesInfo(dir: string, aliasOptions: SvgFileAliasOptions): Promise<SvgFileInfosOpions[]> {
   const svgDir = path.join(dir, '/src/assets');
   const svgFiles = await fg('**/*.svg', { cwd: svgDir });
@@ -45,8 +72,11 @@ export async function formatFilesInfo(dir: string, aliasOptions: SvgFileAliasOpt
     // file size
     const stats = fs.statSync(filePath);
     const fileSize = computedFileSize(stats.size);
-    // width x height
+    // parse content to json
     const content = fs.readFileSync(filePath, 'utf-8');
+    const svgParseJson = svgson.parseSync(content)
+    const flatSvgJson = parseSvgsonData(svgParseJson)
+    // width x height
     const widthMatch = content.match(/width=["']?(\d+)(?:px)?["']?/i);
     const heightMatch = content.match(/height=["']?(\d+)(?:px)?["']?/i);
     const width = widthMatch ? parseInt(widthMatch[1], 10) : null;
@@ -77,6 +107,7 @@ export async function formatFilesInfo(dir: string, aliasOptions: SvgFileAliasOpt
     }
 
     return {
+      compareSvgData: flatSvgJson,
       publicPath: `/src/assets/${item}`,
       filePath,
       fileSize,
