@@ -42,6 +42,10 @@ Click the SVG can view details and copy this SVG importee code. If you do not co
 
 ![](/docs/img/detail.png)
 
+Compare svg content when create or drop file(s). It can show you the same svg preview and filepath. ( v1.0.3 )
+![](/docs/img/compare-svg.png)
+
+
 ## TODO
 
 ✅️ add/delete svg
