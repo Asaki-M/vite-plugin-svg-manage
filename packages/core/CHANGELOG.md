@@ -1,5 +1,11 @@
 # vite-plugin-svg-manage+
 
+## 1.0.4
+
+### Major Changes
+
+- docs: README
+
 ## 1.0.3
 
 ### Patch Changes
