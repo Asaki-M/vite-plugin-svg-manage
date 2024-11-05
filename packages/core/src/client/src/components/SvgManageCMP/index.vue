@@ -197,7 +197,7 @@ const renameSvgFile = (name, publicPath) => {
 </script>
 
 <template>
-  <VueDrawer v-model="showDetail" contentClass="w-1/3">
+  <VueDrawer v-model="showDetail" contentClass="w-1/3 scrollbar">
     <div class="mt-8 px-4 py-2 flex items-center flex-col gap-8">
       <div class="flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
         <img :src="currentDetail.publicPath" class="w-9/12">
@@ -311,19 +311,3 @@ const renameSvgFile = (name, publicPath) => {
   </VueDialog>
   <SameSVGDialog v-model:show="showSameSvgTip" :result="currentSameSvg" />
 </template>
-
-<style scoped>
-.scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 8px;
-}
-
-.scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(128, 128, 128, .1);
-  border-radius: 4px;
-}
-
-.scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-</style>
