@@ -1,4 +1,10 @@
-# vite-plugin-svg-manage
+# vite-plugin-svg-manage+
+
+## 1.0.3
+
+### Patch Changes
+
+- feat: compare svg when create or drop file(s)
 
 ## 1.0.2
 
