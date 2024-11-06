@@ -101,7 +101,7 @@ const deleteAsset = (asset) => {
   const { publicPath: targetPath } = asset
 
   hot.send('vite-plugin-svg-manage:deleteFile', { targetPath })
-  hot.on('vite-plugin-svg-manage:afterDeleteFile', ({ msg, err }) => {
+  hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (err) {
       showVueNotification({
         type: 'error',
@@ -162,7 +162,7 @@ const createSvgFile = async () => {
     }
   })
   
-  hot.on('vite-plugin-svg-manage:afterSaveFile', ({ msg, err }) => {
+  hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (!err) {
       showVueNotification({
         type: 'success',
@@ -183,7 +183,7 @@ const renameSvgFile = (name, publicPath) => {
   arr.pop()
   const targetPath = arr.join('/')
   hot.send('vite-plugin-svg-manage:renameFile', { newName: name + '.svg', targetPath, oldPath: publicPath })
-  hot.on('vite-plugin-svg-manage:afterRenameFile', ({ msg, err }) => {
+  hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (err) {
       console.log(msg, err)
       showVueNotification({

@@ -13,22 +13,26 @@ export async function getAssetsSvg(alias: Array<Alias>, root: string) {
 }
 
 export function compareSvg(data: Array<INode>, list: Array<SvgFileInfosOpions>) {
-  if(list.length === 0) return false
+  if (list.length === 0) return false
 
   let result = null
-  for(let item of list) {
-    if(data.length !== item.compareSvgData.length) continue
+  for (let item of list) {
+    if (data.length !== item.compareSvgData.length) continue
 
-    for(let idx in data) {
+    let count = 0
+    for (let idx in data) {
       const dataNode = data[idx]
       const nodeItem = item.compareSvgData[idx]
-      if(dataNode.name === nodeItem.name) {
+      if (dataNode.name === nodeItem.name) {
         const diffAttributes = findDifferences(dataNode.attributes, nodeItem.attributes)
-        if(Object.keys(diffAttributes).length === 0) {
-          result = item
-          break
+        if (Object.keys(diffAttributes).length === 0) {
+          count++
         }
       }
+    }
+    if (count === data.length) {
+      result = item
+      break
     }
   }
 
