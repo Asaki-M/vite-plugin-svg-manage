@@ -1,4 +1,7 @@
 {
+  "name": "vite-plugin-svg-manage",
+  "version": "1.0.4",
+  "type": "module",
   "license": "MIT",
   "description": "Easy to manage assets SVG",
   "author": "Qinghuan <qinghuanhu@gmail.com>",
@@ -10,20 +13,53 @@
   "bugs": {
     "url": "https://github.com/Asaki-M/vite-plugin-svg-manage/issues"
   },
+  "keywords": [
+    "vue",
+    "vite",
+    "vite-plugin",
+    "svg"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
+    "./src/*": "./src/*"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "play:vue": "pnpm run -r --filter=./packages/playground/vue dev",
-    "dev": "pnpm run -r --filter=./packages/core dev",
-    "dev:client": "pnpm run -r --filter=./packages/core/src/client dev",
-    "build": "pnpm run -r --filter=./packages/core build",
-    "release": "pnpm build && changeset && changeset version && changeset publish"
+    "play:vue": "pnpm run -r --filter=./playground/vue dev",
+    "dev": "tsup src/index.ts --dts --format cjs,esm --shims --watch",
+    "dev:client": "vite src/client",
+    "build": "rimraf dist && run-s build:*",
+    "build:server": "tsup src/index.ts --dts --format cjs,esm --shims",
+    "build:client": "vite build src/client"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.9",
+    "@iconify/json": "^2.2.260",
     "@types/node": "^22.7.5",
+    "@unocss/preset-icons": "^0.63.6",
+    "@unocss/preset-uno": "^0.63.6",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "@vue/devtools-ui": "^7.5.2",
+    "@vueuse/core": "^11.1.0",
+    "fast-glob": "^3.3.2",
+    "kolorist": "^1.8.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
+    "sirv": "^2.0.4",
+    "svgson": "^5.3.1",
     "tsup": "^8.2.4",
     "typescript": "^5.6.3",
-    "vite": "^5.4.4"
+    "unocss": "^0.63.6",
+    "vite-hot-client": "^0.2.3",
+    "vue": "^3.5.12"
+  },
+  "dependencies": {
+    "vite": "5.4.1"
   }
 }
