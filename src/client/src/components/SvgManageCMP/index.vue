@@ -83,12 +83,43 @@ const copyCode = () => {
   }
 }
 
+const computedFilename = computed(() => {
+  return svglist.value.map(item => {
+    const list = item.publicPath.split('/')
+    return list[list.length - 1]
+  })
+})
+const checkIsSameName = (data) => {
+  if (Array.isArray(data)) {
+    for (let item of data) {
+      if (computedFilename.value.indexOf(item.name) !== -1) {
+        showVueNotification({
+          type: 'warning',
+          message: 'Cannot upload the same name svg.'
+        })
+        return true
+      }
+    }
+  } else if (typeof data === 'string') {
+    if (computedFilename.value.indexOf(data) !== -1) {
+      showVueNotification({
+        type: 'warning',
+        message: 'Cannot create the same name svg.'
+      })
+      return true
+    }
+  }
+  return false
+}
+
 const onDropFile = async ({ files, targetPath }) => {
+  if (checkIsSameName(files)) return
+
   const filesList = await readFilesAsArrayBuffer(files)
   const data = { targetPath, filesList }
   hot.send('vite-plugin-svg-manage:compareFile', data)
-  hot.on('vite-plugin-svg-manage:compareCallback', ({msg, result}) => {
-    if(!!result && result.length > 0) {
+  hot.on('vite-plugin-svg-manage:compareCallback', ({ msg, result }) => {
+    if (!!result && result.length > 0) {
       showSameSvgTip.value = true
       currentSameSvg.value = result
     } else {
@@ -151,17 +182,20 @@ const createSvgFile = async () => {
       targetPath: form.value.dir,
       filesList: form.value.files
     }
+    if (checkIsSameName(form.value.files)) return
+  } else if (checkIsSameName(form.value.name + '.svg')) {
+    return
   }
   hot.send('vite-plugin-svg-manage:compareFile', data)
-  hot.on('vite-plugin-svg-manage:compareCallback', ({msg, result}) => {
-    if(!!result && result.length > 0) {
+  hot.on('vite-plugin-svg-manage:compareCallback', ({ msg, result }) => {
+    if (!!result && result.length > 0) {
       showSameSvgTip.value = true
       currentSameSvg.value = result
     } else {
       hot.send('vite-plugin-svg-manage:saveFile', data)
     }
   })
-  
+
   hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (!err) {
       showVueNotification({
