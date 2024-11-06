@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-svg-manage",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "license": "MIT",
   "description": "Easy to manage assets SVG",
@@ -36,10 +36,10 @@
     "dev:client": "vite src/client",
     "build": "rimraf dist && run-s build:*",
     "build:server": "tsup src/index.ts --dts --format cjs,esm --shims",
-    "build:client": "vite build src/client"
+    "build:client": "vite build src/client",
+    "release": "bumpp && npm publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9",
     "@iconify/json": "^2.2.260",
     "@types/node": "^22.7.5",
     "@unocss/preset-icons": "^0.63.6",
@@ -47,6 +47,7 @@
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/devtools-ui": "^7.5.2",
     "@vueuse/core": "^11.1.0",
+    "bumpp": "^9.8.1",
     "fast-glob": "^3.3.2",
     "kolorist": "^1.8.0",
     "npm-run-all": "^4.1.5",
