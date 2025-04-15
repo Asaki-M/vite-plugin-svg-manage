@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-svg-manage",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "license": "MIT",
   "description": "Easy to manage assets SVG",
@@ -37,7 +37,7 @@
     "build": "rimraf dist && run-s build:*",
     "build:server": "tsup src/index.ts --dts --format cjs,esm --shims",
     "build:client": "vite build src/client",
-    "release": "bumpp --commit --push --tag && npm publish"
+    "release": "pnpm build && bumpp --commit --push --tag && npm publish"
   },
   "devDependencies": {
     "@iconify/json": "^2.2.260",
