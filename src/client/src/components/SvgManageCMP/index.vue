@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { VueInput, VueDrawer, VueCodeBlock, VueButton, VueIcon, VueDialog, showVueNotification } from '@vue/devtools-ui'
+import { NInput, NButton, NDialog, useNotification, NDrawer, NDrawerContent, NIcon, NModal } from 'naive-ui'
 import { createHotContext } from 'vite-hot-client'
 import { classifyByDirectory, readFilesAsArrayBuffer } from 'UTIL'
 import { useClipboard } from '@vueuse/core'
@@ -22,6 +22,7 @@ if (hot) {
   })
 }
 
+const message = useNotification()
 
 const searchInput = ref('')
 const computedList = computed(() => {
@@ -54,8 +55,8 @@ const openDetail = (detail) => {
   showDetail.value = true
   currentDetail.value = detail
 }
-watch(showDetail, () => {
-  if (!showDetail.value) {
+watch(showDetail, (newVal) => {
+  if (!newVal) {
     currentDetail.value = null
     currentImportTab.value = 'imgCode'
   }
@@ -69,16 +70,16 @@ const toggleImportTab = (value) => {
 const { copy, isSupported } = useClipboard()
 const copyCode = () => {
   if (!isSupported) {
-    showVueNotification({
-      type: 'warning',
-      message: 'Cannot Copy. Please update your browser.'
+    message.warning({
+      content: 'Cannot Copy. Please update your browser.',
+      duration: 2000
     })
     return
   } else {
     copy(currentDetail.value.importee[currentImportTab.value])
-    showVueNotification({
-      type: 'success',
-      message: 'Copied.'
+    message.success({
+      content: 'Copied.',
+      duration: 2000
     })
   }
 }
@@ -93,18 +94,18 @@ const checkIsSameName = (data) => {
   if (Array.isArray(data)) {
     for (let item of data) {
       if (computedFilename.value.indexOf(item.name) !== -1) {
-        showVueNotification({
-          type: 'warning',
-          message: 'Cannot upload the same name svg.'
+        message.warning({
+          content: 'Cannot upload the same name svg.',
+          duration: 2000
         })
         return true
       }
     }
   } else if (typeof data === 'string') {
     if (computedFilename.value.indexOf(data) !== -1) {
-      showVueNotification({
-        type: 'warning',
-        message: 'Cannot create the same name svg.'
+      message.warning({
+        content: 'Cannot create the same name svg.',
+        duration: 2000
       })
       return true
     }
@@ -121,7 +122,7 @@ const onDropFile = async ({ files, targetPath }) => {
   hot.on('vite-plugin-svg-manage:compareCallback', ({ msg, result }) => {
     if (!!result && result.length > 0) {
       showSameSvgTip.value = true
-      currentSameSvg.value = result
+      currentSameSvg.value = result || []
     } else {
       hot.send('vite-plugin-svg-manage:saveFile', data)
     }
@@ -134,9 +135,9 @@ const deleteAsset = (asset) => {
   hot.send('vite-plugin-svg-manage:deleteFile', { targetPath })
   hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (err) {
-      showVueNotification({
-        type: 'error',
-        message: msg + ':    ' + JSON.stringify(err)
+      message.error({
+        content: msg + ':    ' + JSON.stringify(err),
+        duration: 2000
       })
     }
   })
@@ -151,13 +152,19 @@ const form = ref({
 })
 const selectedValue = ref('')
 const showSameSvgTip = ref(false)
-const currentSameSvg = ref(null)
+const currentSameSvg = ref([])
 
 const dirList = computed(() => {
   return classifyByDirectory(svglist.value).map(item => ({ label: item.title, value: item.title }))
 })
-watch(showCreateDialogVisable, () => {
-  if (!showCreateDialogVisable.value) {
+watch(showCreateDialogVisable, (newVal) => {
+  if (!newVal) {
+    form.value = {
+      dir: '',
+      name: '',
+      content: '',
+      files: []
+    }
     selectedValue.value = ''
   }
 })
@@ -166,31 +173,35 @@ const dialogDropFile = (files) => {
     form.value.files = []
     form.value.name = ''
   } else {
+    form.value.content = ''
     form.value.files = files
     form.value.name = files[0].name.slice(0, files[0].name.length - 4)
   }
 }
 
 const createSvgFile = async () => {
-  let data = {
-    targetPath: form.value.dir,
-    filename: form.value.name + '.svg',
-    content: form.value.content,
-  }
+  let data
+
   if (form.value.files.length !== 0) {
     data = {
       targetPath: form.value.dir,
       filesList: form.value.files
     }
     if (checkIsSameName(form.value.files)) return
-  } else if (checkIsSameName(form.value.name + '.svg')) {
-    return
+  } else if (form.value.content) {
+    data = {
+      targetPath: form.value.dir,
+      filename: form.value.name + '.svg',
+      content: form.value.content,
+    }
+    if (checkIsSameName(form.value.name + '.svg')) return
   }
+
   hot.send('vite-plugin-svg-manage:compareFile', data)
   hot.on('vite-plugin-svg-manage:compareCallback', ({ msg, result }) => {
     if (!!result && result.length > 0) {
-      showSameSvgTip.value = true
       currentSameSvg.value = result
+      showSameSvgTip.value = true
     } else {
       hot.send('vite-plugin-svg-manage:saveFile', data)
     }
@@ -198,15 +209,15 @@ const createSvgFile = async () => {
 
   hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (!err) {
-      showVueNotification({
-        type: 'success',
-        message: msg
+      message.success({
+        content: msg,
+        duration: 2000
       })
       showCreateDialogVisable.value = false
     } else {
-      showVueNotification({
-        type: 'error',
-        message: msg + ':    ' + JSON.stringify(err)
+      message.error({
+        content: msg + ':    ' + JSON.stringify(err),
+        duration: 2000
       })
     }
   })
@@ -220,9 +231,9 @@ const renameSvgFile = (name, publicPath) => {
   hot.on('vite-plugin-svg-manage:callback', ({ msg, err }) => {
     if (err) {
       console.log(msg, err)
-      showVueNotification({
-        type: 'error',
-        message: msg + ':    ' + JSON.stringify(err)
+      message.error({
+        content: msg + ':    ' + JSON.stringify(err),
+        duration: 2000
       })
     }
   })
@@ -231,58 +242,64 @@ const renameSvgFile = (name, publicPath) => {
 </script>
 
 <template>
-  <VueDrawer v-model="showDetail" contentClass="w-1/3 scrollbar">
-    <div class="mt-8 px-4 py-2 flex items-center flex-col gap-8">
-      <div class="flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
-        <img :src="currentDetail.publicPath" class="w-9/12">
-      </div>
-      <div class="w-full flex flex-col gap-3">
-        <div class="w-full flex">
-          <div class="w-2/5 text-gray-400">Filepath</div>
-          <div class="w-3/5 break-words">{{ currentDetail.filePath }}</div>
+  <NDrawer v-model:show="showDetail" :width="500" class="scrollbar" :mask-closable="true">
+    <NDrawerContent title="SVG Detail" closable>
+      <div v-if="currentDetail" class="mt-4 px-4 py-2 flex items-center flex-col gap-8">
+        <div class="flex justify-center items-center rounded w-16 h-16 bg-neutral-50 border border-neutral-200">
+          <img :src="currentDetail.publicPath" class="w-9/12">
         </div>
-        <div class="w-full flex">
-          <div class="w-2/5 text-gray-400">Public Path</div>
-          <div class="w-3/5 break-words">{{ currentDetail.publicPath }}</div>
-        </div>
-        <div class="w-full flex">
-          <div class="w-2/5 text-gray-400">Image Size</div>
-          <div class="w-3/5 break-words">{{ `${currentDetail.width} x ${currentDetail.height}` }}</div>
-        </div>
-        <div class="w-full flex">
-          <div class="w-2/5 text-gray-400">File size</div>
-          <div class="w-3/5 break-words">{{ currentDetail.fileSize }}</div>
-        </div>
-      </div>
-      <div class="w-full">
-        <div class="py-2 font-bold border-b border-gray-200">Import Type(click to copy)</div>
-        <div class="w-full flex">
-          <div
-            class="text-sm w-fit px-4 py-2 hover:bg-slate-50 active:bg-slate-100 cursor-pointer border-r border-b border-gray-200"
-            :class="{ 'bg-slate-100 border-b-0': currentImportTab === tab.key }" v-for="tab in importTab" :key="tab.key"
-            @click="() => toggleImportTab(tab.key)">
-            {{ tab.title }}
+        <div class="w-full flex flex-col gap-3">
+          <div class="w-full flex">
+            <div class="w-2/5 text-gray-400">Filepath</div>
+            <div class="w-3/5 break-words">{{ currentDetail.filePath }}</div>
+          </div>
+          <div class="w-full flex">
+            <div class="w-2/5 text-gray-400">Public Path</div>
+            <div class="w-3/5 break-words">{{ currentDetail.publicPath }}</div>
+          </div>
+          <div class="w-full flex">
+            <div class="w-2/5 text-gray-400">Image Size</div>
+            <div class="w-3/5 break-words">{{ `${currentDetail.width} x ${currentDetail.height}` }}</div>
+          </div>
+          <div class="w-full flex">
+            <div class="w-2/5 text-gray-400">File size</div>
+            <div class="w-3/5 break-words">{{ currentDetail.fileSize }}</div>
           </div>
         </div>
-        <div class="w-full mt-4 py-4 overflow-auto scrollbar">
-          <VueCodeBlock :lines="false" :code="currentDetail.importee[currentImportTab]" lang="js" />
+        <div class="w-full">
+          <div class="py-2 font-bold border-b border-gray-200">Import Type(click to copy)</div>
+          <div class="w-full flex">
+            <div
+              class="text-sm w-fit px-4 py-2 hover:bg-slate-50 active:bg-slate-100 cursor-pointer border-r border-b border-gray-200"
+              :class="{ 'bg-slate-100 border-b-0': currentImportTab === tab.key }" v-for="tab in importTab"
+              :key="tab.key" @click="() => toggleImportTab(tab.key)">
+              {{ tab.title }}
+            </div>
+          </div>
+          <div class="w-full mt-4 py-4 overflow-auto scrollbar">
+            <pre class="rounded bg-gray-50 p-4 overflow-auto">{{ currentDetail.importee[currentImportTab] }}</pre>
+          </div>
+          <NButton class="mt-4" @click="copyCode">Copy</NButton>
         </div>
-        <VueButton class="mt-4" @click="copyCode">Copy</VueButton>
       </div>
-    </div>
-  </VueDrawer>
+    </NDrawerContent>
+  </NDrawer>
   <div class="w-full">
     <div class="w-3/5 mx-auto">
-      <VueInput placeholder="Search..." v-model="searchInput" />
+      <NInput placeholder="Search..." v-model:value="searchInput" />
     </div>
     <div class="w-full mt-5 py-2 px-4 border-b border-gray-200 flex justify-between">
       <div class="text-gray-400 text-lg">
         {{ svglist.length }} {{ svglist.length === 1 ? 'asset' : 'assets' }} in total
       </div>
       <div class="flex items-center gap-2">
-        <VueButton class="w-fit" type="primary" @click="() => showCreateDialogVisable = true">
-          <VueIcon icon="i-carbon-add w-5 h-5"></VueIcon>
-        </VueButton>
+        <NButton class="w-fit" type="primary" @click="() => showCreateDialogVisable = true">
+          <NIcon>
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+              <path fill="currentColor" d="M17 15V8h-2v7H8v2h7v7h2v-7h7v-2z" />
+            </svg>
+          </NIcon>
+        </NButton>
       </div>
     </div>
   </div>
@@ -300,48 +317,50 @@ const renameSvgFile = (name, publicPath) => {
               </div>
               <LabelWithInput :label="asset.publicPath.substring(asset.publicPath.lastIndexOf('/') + 1)"
                 @submit="(name) => renameSvgFile(name, asset.publicPath)"></LabelWithInput>
-              <VueIcon icon="i-carbon-trash-can" class="w-5 h-5 cursor-pointer transition-colors text-red-500"
-                @click.stop="() => deleteAsset(asset)"></VueIcon>
+              <NIcon size="20" class="cursor-pointer text-red-500" @click.stop="() => deleteAsset(asset)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+                  <path fill="currentColor" d="M12 12h2v12h-2zm6 0h2v12h-2z" />
+                  <path fill="currentColor"
+                    d="M4 6v2h2v20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8h2V6zm4 22V8h16v20zm4-26h8v2h-8z" />
+                </svg>
+              </NIcon>
             </div>
           </div>
         </div>
       </DropWrap>
     </div>
   </div>
-  <VueDialog height="fit-content" v-model="showCreateDialogVisable" title="Upload/Create Svg">
-    <template #default>
-      <div class="flex flex-col gap-2 mt-4">
-        <div>
-          <p>Icon Name:</p>
-          <p class="text-sm text-gray-400">You don't need to input .svg</p>
-        </div>
-        <VueInput placeholder="Input..." v-model="form.name"></VueInput>
+  <NModal v-model:show="showCreateDialogVisable" style="width: 600px;" title="Upload/Create Svg" preset="card"
+    :mask-closable="true">
+    <div class="flex flex-col gap-2 mt-4">
+      <div>
+        <p>Icon Name:</p>
+        <p class="text-sm text-gray-400">You don't need to input .svg</p>
       </div>
-      <div class="flex flex-col gap-2 mt-4">
-        <div>
-          <p>Dirctory: </p>
-          <p class="text-sm text-gray-400">Support input a new dirctory</p>
-        </div>
-        <DropDown :options="dirList" v-model:selectedValue="form.dir"></DropDown>
+      <NInput placeholder="Input..." v-model:value="form.name"></NInput>
+    </div>
+    <div class="flex flex-col gap-2 mt-4">
+      <div>
+        <p>Dirctory: </p>
+        <p class="text-sm text-gray-400">Support input a new dirctory</p>
       </div>
-      <div class="flex flex-col gap-2 mt-4">
-        <div>
-          <p>Content:</p>
-          <p class="text-sm text-gray-400">Input svg code or drop a svg file here</p>
-        </div>
-        <DropTextArea v-model:content="form.content" @dropFile="dialogDropFile"></DropTextArea>
+      <DropDown :options="dirList" v-model:selectedValue="form.dir"></DropDown>
+    </div>
+    <div class="flex flex-col gap-2 mt-4">
+      <div>
+        <p>Content:</p>
+        <p class="text-sm text-gray-400">Input svg code or drop a svg file here</p>
       </div>
-    </template>
-    <template #footer>
-      <div class="w-full flex items-center justify-end gap-2">
-        <VueButton class="w-fit" @click="() => showCreateDialogVisable = false">
-          Close
-        </VueButton>
-        <VueButton class="w-fit" type="primary" @click="createSvgFile">
-          Create
-        </VueButton>
-      </div>
-    </template>
-  </VueDialog>
+      <DropTextArea v-model:content="form.content" @dropFile="dialogDropFile"></DropTextArea>
+    </div>
+    <div class="flex items-center justify-end gap-2 mt-4">
+      <NButton class="w-fit" @click="() => showCreateDialogVisable = false">
+        Close
+      </NButton>
+      <NButton class="w-fit" type="primary" @click="createSvgFile">
+        Create
+      </NButton>
+    </div>
+  </NModal>
   <SameSVGDialog v-model:show="showSameSvgTip" :result="currentSameSvg" />
 </template>

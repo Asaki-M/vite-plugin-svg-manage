@@ -1,13 +1,22 @@
 <template>
-  <div class="text-neutral-500" v-show="!isInput" @dblclick="() => isInput = true">{{ label }}</div>
-  <div ref="inputRef">
-    <VueInput :auto-focus="true" v-show="isInput" v-model="inputValue" @keyup.esc="blurEvent" @keyup.enter="enterEvent">
-    </VueInput>
+  <div class="flex items-center gap-2">
+    <div class="text-neutral-500" v-show="!isInput" @dblclick="() => isInput = true">{{ label }}</div>
+    <div ref="inputRef">
+      <NInput 
+        size="small"
+        v-show="isInput" 
+        v-model:value="inputValue" 
+        @keyup.esc="blurEvent" 
+        @keyup.enter="enterEvent"
+        @blur="blurEvent"
+        autofocus
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { VueInput } from '@vue/devtools-ui';
+import { NInput } from 'naive-ui';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({

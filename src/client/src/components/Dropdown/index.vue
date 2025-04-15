@@ -3,18 +3,17 @@
 
     <div @click="toggleDropdown">
       <slot name="trigger">
-        <VueInput v-model="selectedValue" placeholder="Select..."></VueInput>
+        <NInput :value="selectedValue" @update:value="(val) => emit('update:selectedValue', val)"
+          placeholder="Select..."></NInput>
       </slot>
     </div>
 
     <transition name="fade">
-      <div v-if="isOpen" class="absolute mt-2 w-full bg-white shadow-lg rounded p-2 z-10">
-        <ul>
-          <li v-for="option in options" :key="option.value" @click="handleSelect(option)"
-            class="px-4 py-2 hover:bg-gray-100 cursor-pointer text-black">
-            {{ option.label }}
-          </li>
-        </ul>
+      <div v-if="isOpen" class="absolute mt-2 w-full bg-white shadow-lg rounded py-2 z-10">
+        <div v-for="option in options" :key="option.value"
+          class="h-8 px-4 flex items-center cursor-pointer hover:bg-gray-100" @click="handleSelect(option.value)">
+          {{ option.label }}
+        </div>
       </div>
     </transition>
   </div>
@@ -22,16 +21,20 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { VueInput } from '@vue/devtools-ui';
+import { NInput } from 'naive-ui';
 
 const props = defineProps({
   options: {
     type: Array,
     default: () => []
+  },
+  selectedValue: {
+    type: String,
+    default: ''
   }
-})
+});
 
-const selectedValue = defineModel('selectedValue', { required: true })
+const emit = defineEmits(['update:selectedValue']);
 
 const isOpen = ref(false)
 const dropdownRef = ref(null)
@@ -40,9 +43,9 @@ const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
-const handleSelect = (option) => {
+const handleSelect = (value) => {
   isOpen.value = false
-  selectedValue.value = option.value
+  emit('update:selectedValue', value)
 }
 
 const handleClickOutside = (event) => {

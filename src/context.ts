@@ -93,7 +93,7 @@ export class VitePluginSvgManageContext {
         if (!!result) {
           this.sendCompareCallback({ msg: 'Find Same Svg', result: [result] })
         } else {
-          this.sendCompareCallback({ msg: '', result: [result] })
+          this.sendCompareCallback({ msg: '', result: [] })
         }
       } else {
         const result = []
@@ -104,7 +104,6 @@ export class VitePluginSvgManageContext {
             const uploadSvgson = svgson.parseSync(content)
             const uploadSvgsonData = parseSvgsonData(uploadSvgson)
             const res = compareSvg(uploadSvgsonData, this.assetsSvgs)
-
             if (!!res) {
               result.push(res)
             }
